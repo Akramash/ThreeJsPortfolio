@@ -17,7 +17,15 @@ const Home = () => {
   useEffect(() => {
     const handleWheel = (e) => {
       setIsRotating(true);
-      setScrollAccumulation((prev) => prev + e.deltaY * 0.2); // Update based on your sensitivity preference
+      setScrollAccumulation((prev) => {
+        const delta = e.deltaY * 0.2; // Adjust based on sensitivity
+        const newAccumulation = prev + delta;
+        // Define the scrollAccumulation values that map to your desired Y positions
+        const minAccumulationValue = 0; // Maps to Y position of -290
+        const maxAccumulationValue = 2000; // Maps to Y position of -50
+        // Clamp the newAccumulation to be within these bounds
+        return Math.min(Math.max(newAccumulation, minAccumulationValue), maxAccumulationValue);
+      });
     };
 
     const handleScrollEnd = () => {
