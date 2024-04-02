@@ -1,6 +1,7 @@
 import React, { useState, Suspense, useEffect } from 'react'; // Added useEffect here
 import { Canvas } from '@react-three/fiber';
 import Loader from '../components/Loader';
+import { AnimationControlProvider } from '../components/AnimationControlContext';
 import Island from '../models/Island';
 import Ocean from '../models/Ocean';
 import Fish from '../models/Fish';
@@ -12,31 +13,44 @@ const Home = () => {
   const [positionPopUpVisible, setPositionPopUpVisible] = useState(false);
   const [positionPopUpContent, setPositionPopUpContent] = useState("");
   const [isRotating, setIsRotating] = useState(false);
+  const [startDiverAnimation, setStartDiverAnimation] = useState(false); // Added state to control diver animation
   const [scrollAccumulation, setScrollAccumulation] = useState(0);
+
+
+  useEffect(() => {
+    const handleDiverHalfway = () => {
+      setIsRotating(true); // Enable island spinning when diver animation is halfway
+    };
+
+    document.addEventListener('diverAnimationHalfway', handleDiverHalfway);
+
+    return () => {
+      document.removeEventListener('diverAnimationHalfway', handleDiverHalfway);
+    };
+  }, []);
 
   useEffect(() => {
     const handleWheel = (e) => {
-      setIsRotating(true);
+      setStartDiverAnimation(true); // Start diver animation on scroll
+      // Removed setIsRotating(true) here to delay island rotation
       setScrollAccumulation((prev) => {
-        const delta = e.deltaY * 0.2; // Adjust based on sensitivity
+        const delta = e.deltaY * 0.2;
         const newAccumulation = prev + delta;
-        // Define the scrollAccumulation values that map to your desired Y positions
-        const minAccumulationValue = 0; // Maps to Y position of -290
-        const maxAccumulationValue = 2000; // Maps to Y position of -50
-        // Clamp the newAccumulation to be within these bounds
+        const minAccumulationValue = 0;
+        const maxAccumulationValue = 2000;
         return Math.min(Math.max(newAccumulation, minAccumulationValue), maxAccumulationValue);
       });
     };
 
     const handleScrollEnd = () => {
       setIsRotating(false);
+      setStartDiverAnimation(false); // Reset diver animation trigger
     };
 
-    // Debounce scroll end detection
     let scrollEndTimer;
     const debounceScrollEnd = () => {
       clearTimeout(scrollEndTimer);
-      scrollEndTimer = setTimeout(handleScrollEnd, 150); // Adjust timeout to suit your needs
+      scrollEndTimer = setTimeout(handleScrollEnd, 150);
     };
 
     window.addEventListener('wheel', handleWheel);
@@ -91,31 +105,34 @@ const Home = () => {
           {positionPopUpContent}
         </div>
       )}
-      <Canvas className='w-full h-screen bg-transparent' camera={{ position: [0, 0, 5], fov: 75 }}>
-        <Suspense fallback={<Loader />}>
-          <directionalLight position={[1, 1, 1]} intensity={2} />
-          <ambientLight intensity={0.25} />
-          <hemisphereLight skyColor="#b1e1ff" groundColor="#000000" intensity={2}/>
-          <Fish />
-          <Ocean />
-          <Island 
-            scale={islandScale}
-            position={islandPosition}
-            rotation={islandRotation}
-            isRotating={isRotating}
-            scrollAccumulation={scrollAccumulation}
-            setIsRotating={setIsRotating}
-            showRotationPopUp={showRotationPopUp}
-            showPositionPopUp={showPositionPopUp}
-          />
-          <Diver
-            isRotating={isRotating}
-            scale={diverScale}
-            position={diverPosition}
-            rotation={[0, 20, 0]}
-          />
-        </Suspense>
-      </Canvas>
+      <AnimationControlProvider> {/* Wrap Canvas with AnimationControlProvider */}
+        <Canvas className='w-full h-screen bg-transparent' camera={{ position: [0, 0, 5], fov: 75 }}>
+          <Suspense fallback={<Loader />}>
+            <directionalLight position={[1, 1, 1]} intensity={2} />
+            <ambientLight intensity={0.25} />
+            <hemisphereLight skyColor="#b1e1ff" groundColor="#000000" intensity={2}/>
+            <Fish />
+            <Ocean />
+            <Island 
+              scale={islandScale}
+              position={islandPosition}
+              rotation={islandRotation}
+              isRotating={isRotating}
+              scrollAccumulation={scrollAccumulation}
+              setIsRotating={setIsRotating}
+              showRotationPopUp={showRotationPopUp}
+              showPositionPopUp={showPositionPopUp}
+            />
+            <Diver
+              isRotating={isRotating}
+              startAnimation={startDiverAnimation}
+              scale={diverScale}
+              position={diverPosition}
+              rotation={[0, 20, 0]}
+            />
+          </Suspense>
+        </Canvas>
+      </AnimationControlProvider>
     </section>
   );
 }

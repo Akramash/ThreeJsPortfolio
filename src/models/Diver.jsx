@@ -1,37 +1,49 @@
 import { useRef, useEffect, useState } from 'react';
 import { useAnimations, useGLTF } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { useAnimationControl } from '../components/AnimationControlContext';
 
 import diverScene from '../assets/3d/diver.glb';
 
-const Diver = ({ isRotating, ...props }) => {
+const Diver = ({ startAnimation, ...props }) => {
     const ref = useRef();
     const [animationPlayed, setAnimationPlayed] = useState(false);
     const { scene, animations } = useGLTF(diverScene);
-    const { actions } = useAnimations(animations, ref);
+    const { actions, mixer } = useAnimations(animations, ref);
+    const [halfwayDispatched, setHalfwayDispatched] = useState(false);
+    const { setIsHalfway, setPendingScrollAccumulation } = useAnimationControl(); // Assuming useAnimationControl also provides a method to reset pending scroll accumulation
 
     useEffect(() => {
-        // Ensure the 'Action' animation exists
         const action = actions['Action'];
-        if (action) {
-            // Set the animation to only play once and clamp when finished
+        if (action && startAnimation && !animationPlayed) {
+            action.reset();
             action.clampWhenFinished = true;
             action.loop = THREE.LoopOnce;
-
-            // Play the animation once upon grabbing
-            if (isRotating && !animationPlayed) {
-                action.reset().play();
-                setAnimationPlayed(true);
-            }
+            action.play();
+            setAnimationPlayed(true);
         }
-    }, [isRotating, animationPlayed, actions]);
+    }, [startAnimation, animationPlayed, actions]);
 
-    useEffect(() => {
-        // Reset the animation state if not rotating, allowing it to be played again
-        if (!isRotating) {
+    useFrame((state, delta) => {
+        if (!mixer || !actions['Action']) return;
+        
+        mixer.update(delta);
+        
+        const action = actions['Action'];
+        if (animationPlayed && action.time >= action.getClip().duration / 2 && !halfwayDispatched) {
+            setIsHalfway(true);
+            setHalfwayDispatched(true);
+        }
+        
+        if (animationPlayed && !action.isRunning() && action.time >= action.getClip().duration) {
+            // Make sure this block is executed after the animation is confirmed to have finished
             setAnimationPlayed(false);
+            setHalfwayDispatched(false);
+            setIsHalfway(false); // This should trigger the Island component to reset isHalfwayReached
+            setPendingScrollAccumulation(0); // Adjust based on your logic
         }
-    }, [isRotating]);
+    });
 
     return (
         <mesh {...props} ref={ref}>
