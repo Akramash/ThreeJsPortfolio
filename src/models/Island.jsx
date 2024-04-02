@@ -15,6 +15,7 @@ const Island = ({ showRotationPopUp, ...props }) => {
     const [isHalfwayReached, setIsHalfwayReached] = useState(false);
     const easing = 0.05;
     const { isHalfway, setIsHalfway } = useAnimationControl();
+    
 // Clamp function for Vector3
 
 

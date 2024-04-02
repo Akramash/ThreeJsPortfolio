@@ -15,6 +15,7 @@ const Home = () => {
   const [isRotating, setIsRotating] = useState(false);
   const [startDiverAnimation, setStartDiverAnimation] = useState(false); // Added state to control diver animation
   const [scrollAccumulation, setScrollAccumulation] = useState(0);
+  const [scrollDirection, setScrollDirection] = useState('down'); // Default to 'down'
 
 
   useEffect(() => {
@@ -33,6 +34,10 @@ const Home = () => {
     const handleWheel = (e) => {
       setStartDiverAnimation(true); // Start diver animation on scroll
       // Removed setIsRotating(true) here to delay island rotation
+      const newDirection = e.deltaY > 0 ? 'down' : 'up';
+      if (scrollDirection !== newDirection) {
+        setScrollDirection(newDirection);
+      }
       setScrollAccumulation((prev) => {
         const delta = e.deltaY * 0.2;
         const newAccumulation = prev + delta;
@@ -60,7 +65,7 @@ const Home = () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('wheel', debounceScrollEnd);
     };
-  }, []);
+  }, [scrollDirection]);
 
   // Dynamically adjust the island for screen size
   const adjustIslandForScreenSize = () => {
@@ -128,7 +133,7 @@ const Home = () => {
               startAnimation={startDiverAnimation}
               scale={diverScale}
               position={diverPosition}
-              rotation={[0, 20, 0]}
+              rotation={[0, scrollDirection === 'down' ? 20 : -114.5, 0]}
             />
           </Suspense>
         </Canvas>

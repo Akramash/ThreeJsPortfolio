@@ -6,13 +6,22 @@ export const useAnimationControl = () => useContext(AnimationControlContext);
 
 export const AnimationControlProvider = ({ children }) => {
   const [isHalfway, setIsHalfway] = useState(false);
-  const [pendingScrollAccumulation, setPendingScrollAccumulation] = useState(0); // New state for pending scroll
+  const [pendingScrollAccumulation, setPendingScrollAccumulation] = useState(0);
+  // Initialize the new state for diver's rotation
+  const [isDiverRotating, setIsDiverRotating] = useState(false);
+  // Initialize the new state for last scroll direction ('up', 'down', or null to start)
+  const [lastScrollDirection, setLastScrollDirection] = useState(null);
 
+  // Expand the value object to expose these new states and setters
   const value = {
     isHalfway,
     setIsHalfway,
-    pendingScrollAccumulation, // Expose pending scroll accumulation state
-    setPendingScrollAccumulation, // Expose function to set pending scroll accumulation
+    pendingScrollAccumulation,
+    setPendingScrollAccumulation,
+    isDiverRotating, // Expose isDiverRotating state
+    setIsDiverRotating, // Expose setIsDiverRotating function
+    lastScrollDirection, // Expose lastScrollDirection state
+    setLastScrollDirection, // Expose setLastScrollDirection function
   };
 
   return (
