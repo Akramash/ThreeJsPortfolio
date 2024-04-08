@@ -8,8 +8,6 @@ import Fish from '../models/Fish';
 import Diver from '../models/Diver';
 
 const Home = () => {
-  const [rotationPopUpVisible, setRotationPopUpVisible] = useState(false);
-  const [rotationPopUpContent, setRotationPopUpContent] = useState("");
   const [positionPopUpVisible, setPositionPopUpVisible] = useState(false);
   const [positionPopUpContent, setPositionPopUpContent] = useState("");
   const [isRotating, setIsRotating] = useState(false);
@@ -86,11 +84,7 @@ const Home = () => {
   const [diverScale, diverPosition] = adjustDiverForScreenSize();
 
   // Function to handle the pop-up based on the island's rotation stage
-  const showRotationPopUp = (rotationStage) => {
-    setRotationPopUpContent(`You've entered rotation stage: ${rotationStage}`);
-    setRotationPopUpVisible(true);
-    setTimeout(() => setRotationPopUpVisible(false), 3000); // Automatically hide the pop-up after 3 seconds
-  };
+
 
   const showPositionPopUp = (positionStage) => {
     setPositionPopUpContent(`You've entered position stage: ${positionStage}`);
@@ -100,11 +94,6 @@ const Home = () => {
 
   return (
     <section className={`w-full h-screen relative ${isRotating ? 'cursor-grabbing' : 'cursor-grab'}`}>
-      {rotationPopUpVisible && (
-        <div style={{ position: "fixed", top: "10px", left: "50%", transform: "translateX(-50%)", zIndex: 1000, background: "white", padding: "20px", borderRadius: "10px", boxShadow: "0 2px 4px rgba(0,0,0,.5)" }}>
-          {rotationPopUpContent}
-        </div>
-      )}
       {positionPopUpVisible && (
         <div style={{ position: "fixed", top: "50px", left: "50%", transform: "translateX(-50%)", zIndex: 1000, background: "white", padding: "20px", borderRadius: "10px", boxShadow: "0 2px 4px rgba(0,0,0,.5)" }}>
           {positionPopUpContent}
@@ -124,8 +113,7 @@ const Home = () => {
               rotation={islandRotation}
               isRotating={isRotating}
               scrollAccumulation={scrollAccumulation}
-              setIsRotating={setIsRotating}
-              showRotationPopUp={showRotationPopUp}
+              setIsRotating={setIsRotating}  
               showPositionPopUp={showPositionPopUp}
             />
             <Diver

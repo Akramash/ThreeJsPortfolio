@@ -1,20 +1,27 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useGLTF } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useGLTF, Html } from "@react-three/drei";
+import { useFrame  } from "@react-three/fiber";
 import { Vector3, Euler, MathUtils } from 'three';
-import { useAnimationControl } from '../components/AnimationControlContext'; // Import the context hook
+import { useAnimationControl } from '../components/AnimationControlContext';
+import stages from "../components/IslandStages";
+import { compareVectors, compareEulers } from "../components/utils";
+import { useNavigate } from "react-router-dom"; // Make sure to import useNavigate
 import islandScene from '../assets/3d/island.glb';
+import StageIndicator from "../components/StageIndicator";
 
-const Island = ({ showRotationPopUp, ...props }) => {
+
+const Island = ({ showPositionPopUp, ...props }) => {
     const islandRef = useRef();
     const { nodes, materials } = useGLTF(islandScene);
-    // Initialize scroll accumulation states
     const [smoothedScrollAccumulation, setSmoothedScrollAccumulation] = useState(0);
     const [pendingScrollAccumulation, setPendingScrollAccumulation] = useState(0);
-    // State to indicate whether the halfway point has been reached
     const [isHalfwayReached, setIsHalfwayReached] = useState(false);
     const easing = 0.05;
     const { isHalfway, setIsHalfway } = useAnimationControl();
+    const navigate = useNavigate(); // Use useNavigate for navigation
+    const [currentStage, setCurrentStage] = useState(null); // State for managing current stage
+    const [showStageIndicator, setShowStageIndicator] = useState(false);
+
     
 // Clamp function for Vector3
 
@@ -30,19 +37,19 @@ const Island = ({ showRotationPopUp, ...props }) => {
 
     useFrame(() => {
         if (!islandRef.current) return;
-
+    
         // Check if halfway has been reached to start updating the smoothed accumulation
         if (isHalfwayReached) {
             const newAccumulation = MathUtils.lerp(smoothedScrollAccumulation, pendingScrollAccumulation, easing);
             setSmoothedScrollAccumulation(newAccumulation);
         }
-
+    
         // This part now runs regardless of isHalfwayReached after it's been set once
         let t = MathUtils.clamp(smoothedScrollAccumulation / 2000, 0, 1) * (path.length - 1);
         const index = Math.floor(t);
         let nextIndex = Math.ceil(t);
         nextIndex = nextIndex >= path.length ? path.length - 1 : nextIndex;
-
+    
         const alpha = t - index;
         const currentPosition = path[index].position.clone().lerp(path[nextIndex].position, alpha);
         const currentRotation = new Euler(
@@ -50,11 +57,21 @@ const Island = ({ showRotationPopUp, ...props }) => {
             MathUtils.lerp(path[index].rotation.y, path[nextIndex].rotation.y, alpha),
             MathUtils.lerp(path[index].rotation.z, path[nextIndex].rotation.z, alpha)
         );
-
+    
         islandRef.current.position.copy(currentPosition);
         islandRef.current.rotation.copy(currentRotation);
+    
+        // Check for matching stage based on the current position and rotation
+        stages.forEach((stage, index) => {
+            if (islandRef.current.position.distanceTo(stage.position) < 5) { // Consider a small threshold for matching
+                if (currentStage !== index) { // Check if we've entered a new stage
+                    setCurrentStage(index);
+                    showPositionPopUp(`${stage.popupContent}`); // Trigger popup
+                    // Optional: Trigger navigation directly or use a key press event as shown below
+                }
+            }
+        });
     });
-
     // Continue to accumulate scroll delta
     useEffect(() => {
         const handleScroll = (e) => {
@@ -65,6 +82,18 @@ const Island = ({ showRotationPopUp, ...props }) => {
         window.addEventListener('wheel', handleScroll);
         return () => window.removeEventListener('wheel', handleScroll);
     }, []);
+
+    useEffect(() => {
+        const handleKeyPress = (event) => {
+            if (event.code === "Space" && currentStage !== null) {
+                navigate(stages[currentStage].route); // Navigate based on the current stage
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyPress);
+        return () => window.removeEventListener("keydown", handleKeyPress);
+    }, [currentStage, navigate]);
+
 
 
     const clampVector3 = (vector, min, max) => {

@@ -10,7 +10,7 @@ export const AnimationControlProvider = ({ children }) => {
   // Initialize the new state for diver's rotation
   const [isDiverRotating, setIsDiverRotating] = useState(false);
   // Initialize the new state for last scroll direction ('up', 'down', or null to start)
-  const [lastScrollDirection, setLastScrollDirection] = useState(null);
+  const [lastScrollDirection, setLastScrollDirection] = useState('initial');
 
   // Expand the value object to expose these new states and setters
   const value = {
